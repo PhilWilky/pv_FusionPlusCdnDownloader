@@ -10,28 +10,17 @@ csv_file = "test.csv"
 if not os.path.exists("images"):
     os.mkdir("images")
 
-def download_image(item_code, image_url):
+def download_image(item_code, image_url, index):
     response = requests.get(image_url)
     expected_size = int(response.headers.get('Content-Length', 0))
-    
-    # check if a file with the given item_code already exists in the images folder
-    filename = f"images/{item_code}.jpg"
-    if os.path.exists(filename):
-        # if it does, add a suffix to the filename
-        suffix = 1
-        while os.path.exists(f"images/{item_code}_{suffix}.jpg"):
-            suffix += 1
-        filename = f"images/{item_code}_{suffix}.jpg"
-    
-    with open(filename, 'wb') as f:
+    filename = f"{item_code}-{index}.jpg" if index else f"{item_code}.jpg"
+    with open(f"images/{filename}", 'wb') as f:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
-    
-    actual_size = os.path.getsize(filename)
+    actual_size = os.path.getsize(f"images/{filename}")
     if actual_size != expected_size:
-        print(f"Failed to download image for item code {item_code}.")
-
+        print(f"Failed to download image for item code {item_code} and index {index}.")
 
 # open the CSV file and read its contents
 with open(csv_file, 'r') as file:
@@ -42,13 +31,17 @@ with open(csv_file, 'r') as file:
     # loop through the rows of the CSV file
     with ThreadPoolExecutor(max_workers=10) as executor:
         for i, row in enumerate(reader, start=1):
-            # get the item code and image URL from the current row
+            # get the item code, image URL and index from the current row
             item_code = row[0]
             image_url = row[1]
+            index = int(row[2])
             # download the image from the CDN using a thread from the thread pool
-            executor.submit(download_image, item_code, image_url)
+            executor.submit(download_image, item_code, image_url, index)
             # print a message to show progress and confirm that the image has been downloaded
-            print(f"Processed row {i}/{num_rows}, {item_code} image downloaded.")
+            if index:
+                print(f"Processed row {i}/{num_rows}, {item_code}-{index} image downloaded.")
+            else:
+                print(f"Processed row {i}/{num_rows}, {item_code} image downloaded.")
     
     # print a final message to show how many images were downloaded
     print(f"Finished downloading {num_rows} images.")
