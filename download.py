@@ -13,13 +13,25 @@ if not os.path.exists("images"):
 def download_image(item_code, image_url):
     response = requests.get(image_url)
     expected_size = int(response.headers.get('Content-Length', 0))
-    with open(f"images/{item_code}.jpg", 'wb') as f:
+    
+    # check if a file with the given item_code already exists in the images folder
+    filename = f"images/{item_code}.jpg"
+    if os.path.exists(filename):
+        # if it does, add a suffix to the filename
+        suffix = 1
+        while os.path.exists(f"images/{item_code}_{suffix}.jpg"):
+            suffix += 1
+        filename = f"images/{item_code}_{suffix}.jpg"
+    
+    with open(filename, 'wb') as f:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
-    actual_size = os.path.getsize(f"images/{item_code}.jpg")
+    
+    actual_size = os.path.getsize(filename)
     if actual_size != expected_size:
         print(f"Failed to download image for item code {item_code}.")
+
 
 # open the CSV file and read its contents
 with open(csv_file, 'r') as file:
