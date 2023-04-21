@@ -4,7 +4,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 
 # define the name of the CSV file
-csv_file = "test.csv"
+csv_file = "2023-02-20_Run.csv"
 
 # create the folder to save the images
 if not os.path.exists("images"):
